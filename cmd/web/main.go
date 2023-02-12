@@ -4,6 +4,7 @@ const webPort = "80"
 
 func main() {
 	// connect to the database
+	_ = initDB()
 
 	// create sessions for server side rendering
 
