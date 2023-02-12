@@ -39,6 +39,9 @@ func main() {
 
 	// set up mail
 
+	// start goroutine in the background for graceful shutdown
+	go app.listenForShutdown()
+
 	// listen for web connections
 	app.serve()
 }
