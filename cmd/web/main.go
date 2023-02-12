@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"sync"
 )
@@ -25,7 +27,7 @@ func main() {
 	wg := sync.WaitGroup{}
 
 	// set up application config
-	_ = Config{
+	app := Config{
 		Session:  session,
 		DB:       db,
 		InfoLog:  infoLog,
@@ -36,4 +38,19 @@ func main() {
 	// set up mail
 
 	// listen for web connections
+	app.serve()
+}
+
+// serve starts an http server and listen a port
+func (app *Config) serve() {
+	srv := &http.Server{
+		Addr:    fmt.Sprintf("localhost:%s", webPort),
+		Handler: app.routes(),
+	}
+
+	app.InfoLog.Println("starting web server...")
+	err := srv.ListenAndServe()
+	if err != nil {
+		log.Panic(err)
+	}
 }
