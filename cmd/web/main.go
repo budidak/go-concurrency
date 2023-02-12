@@ -7,6 +7,7 @@ func main() {
 	_ = initDB()
 
 	// create sessions for server side rendering
+	_ = initSession()
 
 	// create loggers
 
