@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"go-concurrency/data"
 	"net/http"
 	"text/template"
 	"time"
@@ -20,6 +21,7 @@ type TemplateData struct {
 	Error         string
 	Authenticated bool
 	Now           time.Time
+	User          *data.User // will hold user table info
 }
 
 // render executes go templates on the browser

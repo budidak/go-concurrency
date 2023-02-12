@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/gob"
+	"go-concurrency/data"
 	"net/http"
 	"os"
 	"time"
@@ -12,6 +14,8 @@ import (
 
 // initSession initializes the session and configures some settings
 func initSession() *scs.SessionManager {
+	// sessions'da bilgi store edebilmek için register etmeliyiz.
+	gob.Register(data.User{})
 	// setup session
 	session := scs.New()
 	session.Store = redisstore.New(initRedis()) // store session informations inside redis

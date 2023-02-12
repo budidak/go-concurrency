@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"go-concurrency/data"
 	"log"
 	"net/http"
 	"os"
@@ -33,6 +34,7 @@ func main() {
 		InfoLog:  infoLog,
 		ErrorLog: errorLog,
 		Wait:     &wg,
+		Models:   data.New(db), // creates empty db models
 	}
 
 	// set up mail

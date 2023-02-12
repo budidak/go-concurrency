@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"go-concurrency/data"
 	"log"
 	"sync"
 
@@ -16,4 +17,5 @@ type Config struct {
 	InfoLog  *log.Logger
 	ErrorLog *log.Logger
 	Wait     *sync.WaitGroup
+	Models   data.Models // will hold db table models
 }
