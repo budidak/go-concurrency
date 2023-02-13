@@ -39,8 +39,56 @@ type Message struct {
 	Template    string         // bu verileri göndereceğimiz template
 }
 
-// a function to listen for messages on the MailerChan
+// listenForMail continously listens for messages on the MailerChan, or error on the ErrorChan etc.
+func (app *Config) listenForMail() {
+	for {
+		select {
+		// MailerChan içinde mail varsa alacağız ve bu case gerçekleşirse;
+		// arkaplanda goroutine ile sendMail() ile maili göndereceğiz.
+		case msg := <-app.Mailer.MailerChan:
+			go app.Mailer.sendMail(msg, app.Mailer.ErrorChan)
+		// olası bir hata oluşması durumunda ErrorChan'den error alacağı ve handle edeceğiz.
+		// sendMail() fonksiyonunu yazarken öyle handle etmiştik errorları.
+		case err := <-app.Mailer.ErrorChan:
+			app.ErrorLog.Println(err)
+		// eğer DoneChan'e tamamlanmayla ilgili bilgi gelirse programı sonlandıracağız.
+		case <-app.Mailer.DoneChan:
+			return
+		}
+	}
+}
+
+// createMail function sets mail configurations and returns a Mail
+// buradan dönen m değeri, Config içerisindeki Mail tipindeki değişkene atanacak.
+// böylelikle aynı ayarları listenForMail() içerisinde yazmadan Config içinden çekip kullanabileceğiz.
+func (app *Config) createMail() Mail {
+	// create channels
+	errorChan := make(chan error)
+	mailerChan := make(chan Message, 100) // buffered channel, can hold 100 Messages
+	doneChan := make(chan bool)
+
+	m := Mail{
+		Domain:      "localhost",
+		Host:        "localhost",
+		Port:        1025,
+		Encryption:  "none",
+		FromName:    "Info",
+		FromAddress: "info@mycompany.com",
+		Wait:        app.Wait,
+		ErrorChan:   errorChan,
+		MailerChan:  mailerChan,
+		DoneChan:    doneChan,
+	}
+
+	return m
+}
+
+// sendMail function sets up SMTP configurations and sends an email
+// bunu programda otomatik olarak mail göndermek için kullanacağız, hatalı girişler veya üyelik gibi...
 func (m *Mail) sendMail(msg Message, errorChan chan error) {
+
+	defer m.Wait.Done() // decrement wait group counter by 1 at the end of function
+
 	// if there is no template for the given message, use default
 	if msg.Template == "" {
 		msg.Template = "mail"

@@ -18,4 +18,5 @@ type Config struct {
 	ErrorLog *log.Logger
 	Wait     *sync.WaitGroup
 	Models   data.Models // will hold db table models
+	Mailer   Mail
 }
