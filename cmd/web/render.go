@@ -72,7 +72,15 @@ func (app *Config) AddDefaultData(td *TemplateData, r *http.Request) *TemplateDa
 
 	if app.IsAuthenticated(r) {
 		td.Authenticated = true
-		// TODO - get more user information
+		// get more user information from the session
+		// dönen interface'i -> data.User olarak cast ediyoruz.
+		user, ok := app.Session.Get(r.Context(), "user").(data.User)
+		if !ok {
+			app.ErrorLog.Println("can't get user from session")
+		} else {
+			td.User = &user // session'dan başarıyla aldık ve template yapısına aktardık.
+		}
+
 	}
 
 	return td
