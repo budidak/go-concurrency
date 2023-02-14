@@ -43,6 +43,15 @@ func (app *Config) PostLoginPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !validPassword {
+		// eğer parola yanlış girilirse serverdan otomatik bir mail yollat.
+		msg := Message{
+			To:      email,
+			Subject: "Failed to login attempt!",
+			Data:    "Invalid login attempt!",
+		}
+		app.sendEmail(msg) // bu fonksiyon channel'a msg parametresini iletecek.
+		// channela bir data geldiğinde arka planda goroutine çalıştığı için
+		// server da otomatik olarak sistemden mail yollayacak.
 		app.Session.Put(r.Context(), "error", "Invalid credentials...")
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return

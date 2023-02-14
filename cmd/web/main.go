@@ -38,6 +38,8 @@ func main() {
 	}
 
 	// set up mail
+	app.Mailer = app.createMail() // sets the configurations for mail service
+	go app.listenForMail()        // this listens for the mail channels in the background
 
 	// start goroutine in the background for graceful shutdown
 	go app.listenForShutdown()

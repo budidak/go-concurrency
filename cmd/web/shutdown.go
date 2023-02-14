@@ -19,7 +19,11 @@ func (app *Config) listenForShutdown() {
 func (app *Config) shutdown() {
 	app.InfoLog.Println("performing any cleanup tasks...")
 
-	app.Wait.Wait() // blocks if WaitGroup counter is not zero.
+	app.Wait.Wait()             // blocks if WaitGroup counter is not zero. (no more mails in the channel)
+	app.Mailer.DoneChan <- true // quit the routine
 
 	app.InfoLog.Println("closing channels and shutting down application...")
+	close(app.Mailer.MailerChan)
+	close(app.Mailer.ErrorChan)
+	close(app.Mailer.DoneChan)
 }
