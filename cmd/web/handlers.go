@@ -126,6 +126,34 @@ func (app *Config) Logout(w http.ResponseWriter, r *http.Request) {
 
 func (app *Config) ActivateAccount(w http.ResponseWriter, r *http.Request) {
 	// validate url
+	url := r.RequestURI                               // get url from request (clicked activation link)
+	testURL := fmt.Sprintf("http://localhost%s", url) // env.var'dan almalıyız basitçe hardcoded yazdık.
+	okay := VerifyToken(testURL)
+	if !okay {
+		app.Session.Put(r.Context(), "error", "Invalid token")
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	// activate account, url email parametresine göre db'den ilgili user'i çek.
+	u, err := app.Models.User.GetByEmail(r.URL.Query().Get("email"))
+	if err != nil {
+		app.Session.Put(r.Context(), "error", "No user found")
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	u.Active = 1 // db'den user başarıyla çekildi burası çalıştı.
+	err = u.Update()
+	if err != nil {
+		app.Session.Put(r.Context(), "error", "Unable to update user")
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	// update kısmında da sorun olmazsa buradayız.
+	app.Session.Put(r.Context(), "flash", "Account activated! You can now log in.")
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 
 	// generate an invoice
 

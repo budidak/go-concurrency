@@ -22,7 +22,7 @@ func (app *Config) routes() http.Handler {
 	mux.Get("/register", app.RegisterPage)
 	mux.Post("/register", app.PostRegisterPage)
 	mux.Get("/logout", app.Logout)
-	mux.Get("/activate-account", app.ActivateAccount)
+	mux.Get("/activate", app.ActivateAccount)
 
 	return mux
 }
