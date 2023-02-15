@@ -24,7 +24,13 @@
                                 <td>{{.PlanName}}</td>
                                 <td class="text-center">{{.PlanAmountFormatted}}/month</td>
                                 <td class="text-center">
-                                    <a class="btn btn-primary btn-sm" href="#!" onclick="selectPlan('{{.ID}}', '{{.PlanName}}')">Select</a>
+                                    <!-- Eğer user'ın zaten bir planı varsa, 
+                                        ve template'e gönderilen .ID bilgisi database'deki ID bilgisi ile aynıysa -->
+                                    {{if and ($user.Plan) (eq $user.Plan.ID .ID)}}
+                                        <strong>Current plan</strong>
+                                    {{else}}
+                                        <a class="btn btn-primary btn-sm" href="#!" onclick="selectPlan('{{.ID}}', '{{.PlanName}}')">Select</a>
+                                    {{end}}
                                 </td>
                             </tr>
                         {{end}}
