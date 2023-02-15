@@ -5,6 +5,7 @@ import (
 	"go-concurrency/data"
 	"html/template"
 	"net/http"
+	"strconv"
 )
 
 func (app *Config) HomePage(w http.ResponseWriter, r *http.Request) {
@@ -175,11 +176,25 @@ func (app *Config) chooseSubscription(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
-	// get the id of the plan that is chosen
+	// get the id of the plan that is chosen (bunu URL üzerinden alabiliriz, plans.page.gotmpl yazdık)
+	id := r.URL.Query().Get("id")
+	planID, _ := strconv.Atoi(id)
 
-	// get the plan from the database
+	// get the plan from the database (URL'den alınan id bilgisi ile veritabanından planı getir)
+	plan, err := app.Models.Plan.GetOne(planID)
+	if err != nil {
+		app.Session.Put(r.Context(), "error", "Unable to find plan.")
+		http.Redirect(w, r, "/members/plans", http.StatusSeeOther)
+		return
+	}
 
-	// get the user from the session
+	// get the user from the session (has user logged in or not?)
+	user, ok := app.Session.Get(r.Context(), "user").(data.User)
+	if !ok {
+		app.Session.Put(r.Context(), "error", "Log in first!")
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
 
 	// generate an invoice (concurrent task)
 
