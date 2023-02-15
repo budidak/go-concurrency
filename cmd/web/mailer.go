@@ -29,14 +29,15 @@ type Mail struct {
 
 // Message is the data type for the mails
 type Message struct {
-	From        string
-	FromName    string
-	To          string
-	Subject     string
-	Attachments []string
-	Data        any            // body
-	DataMap     map[string]any // getting data to the template
-	Template    string         // bu verileri göndereceğimiz template
+	From          string
+	FromName      string
+	To            string
+	Subject       string
+	Attachments   []string
+	AttachmentMap map[string]string
+	Data          any            // body
+	DataMap       map[string]any // getting data to the template
+	Template      string         // bu verileri göndereceğimiz template
 }
 
 // listenForMail continously listens for messages on the MailerChan, or error on the ErrorChan etc.
@@ -104,13 +105,18 @@ func (m *Mail) sendMail(msg Message, errorChan chan error) {
 		msg.FromName = m.FromName
 	}
 
-	// create a variable for passing the message body to the template
-	data := map[string]any{
-		"message": msg.Data,
-		// "message" kullandık; çünkü mail.html.gotmpl/mail.plain.gotmpl dosyalarında o isimde kullandık.
+	// if there is no AttachmentMap, create empty map
+	if msg.AttachmentMap == nil {
+		msg.AttachmentMap = make(map[string]string)
 	}
 
-	msg.DataMap = data
+	// if there is no data in DataMap, create empty map
+	if len(msg.DataMap) == 0 {
+		msg.DataMap = make(map[string]any)
+	}
+
+	msg.DataMap["message"] = msg.Data
+	// "message" kullandık; çünkü mail.html.gotmpl/mail.plain.gotmpl dosyalarında o isimde kullandık.
 
 	// build html mail
 	formattedMessage, err := m.buildHTMLMessage(msg)
@@ -151,6 +157,12 @@ func (m *Mail) sendMail(msg Message, errorChan chan error) {
 	if len(msg.Attachments) > 0 {
 		for _, x := range msg.Attachments {
 			email.AddAttachment(x)
+		}
+	}
+
+	if len(msg.AttachmentMap) > 0 {
+		for key, val := range msg.AttachmentMap {
+			email.AddAttachment(val, key)
 		}
 	}
 
