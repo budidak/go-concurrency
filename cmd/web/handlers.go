@@ -206,7 +206,6 @@ func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 
 	// generate an invoice and email it (concurrent task)
 	app.Wait.Add(1)
-
 	go func() {
 		defer app.Wait.Done()
 
@@ -257,7 +256,6 @@ func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 	// redirect
 	app.Session.Put(r.Context(), "flash", "Subscribed!")
 	http.Redirect(w, r, "/members/plans", http.StatusSeeOther)
-
 }
 
 // getInvoice function generates some kind of content and send it to the user
@@ -292,5 +290,4 @@ func (app *Config) generateManual(u data.User, plan *data.Plan) *gofpdf.Fpdf {
 	pdf.MultiCell(0, 4, fmt.Sprintf("%s User Guide", plan.PlanName), "", "C", false)
 
 	return pdf
-
 }
