@@ -183,7 +183,10 @@ func (app *Config) chooseSubscription(w http.ResponseWriter, r *http.Request) {
 func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 	// get the id of the plan that is chosen (bunu URL üzerinden alabiliriz, plans.page.gotmpl yazdık)
 	id := r.URL.Query().Get("id")
-	planID, _ := strconv.Atoi(id)
+	planID, err := strconv.Atoi(id)
+	if err != nil {
+		app.ErrorLog.Println("error getting plan: ", err)
+	}
 
 	// get the plan from the database (URL'den alınan id bilgisi ile veritabanından planı getir)
 	plan, err := app.Models.Plan.GetOne(planID)
@@ -259,6 +262,7 @@ func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 
 // getInvoice function generates some kind of content and send it to the user
 func (app *Config) getInvoice(u data.User, plan *data.Plan) (string, error) {
+	app.InfoLog.Println("Amount is :", plan.PlanAmountFormatted)
 	return plan.PlanAmountFormatted, nil
 }
 
