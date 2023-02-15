@@ -23,8 +23,23 @@ func (app *Config) routes() http.Handler {
 	mux.Post("/register", app.PostRegisterPage)
 	mux.Get("/logout", app.Logout)
 	mux.Get("/activate", app.ActivateAccount)
+
+	mux.Mount("/members", app.authRouter())
+	// artık Mount ettikten sonra routes => /members/plans ve /members/subscribe oldu.
+
+	return mux
+}
+
+func (app *Config) authRouter() http.Handler {
+	// create a router
+	mux := chi.NewRouter()
+
+	// set middlewares
+	mux.Use(app.Auth)
+
+	// define application routes
 	mux.Get("/plans", app.chooseSubscription)
-	mux.Get("/subsribe", app.SubscribeToPlan)
+	mux.Get("/subscribe", app.SubscribeToPlan)
 
 	return mux
 }

@@ -160,13 +160,6 @@ func (app *Config) ActivateAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Config) chooseSubscription(w http.ResponseWriter, r *http.Request) {
-	// kullanıcı giriş yapmadıysa planları görememeli. (bunu middleware olarak da yazabilirdik)
-	if !app.Session.Exists(r.Context(), "userID") {
-		app.Session.Put(r.Context(), "warning", "You must log in to see this page!")
-		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
-		return
-	}
-
 	plans, err := app.Models.Plan.GetAll()
 	if err != nil {
 		app.ErrorLog.Println(err) // terminale yazmak yerine, error sayfası oluşturup yönlendirebilirsin.
