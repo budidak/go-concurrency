@@ -21,9 +21,12 @@ func (app *Config) shutdown() {
 
 	app.Wait.Wait()             // blocks if WaitGroup counter is not zero. (no more mails in the channel)
 	app.Mailer.DoneChan <- true // quit the routine
+	app.ErrorChanDone <- true
 
 	app.InfoLog.Println("closing channels and shutting down application...")
 	close(app.Mailer.MailerChan)
 	close(app.Mailer.ErrorChan)
 	close(app.Mailer.DoneChan)
+	close(app.ErrorChan)
+	close(app.ErrorChanDone)
 }

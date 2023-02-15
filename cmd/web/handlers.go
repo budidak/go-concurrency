@@ -196,9 +196,26 @@ func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// generate an invoice (concurrent task)
+	// generate an invoice and email it (concurrent task)
+	app.Wait.Add(1)
 
-	// send an email with the invoice attached (concurrent task)
+	go func() {
+		defer app.Wait.Done()
+
+		invoice, err := app.getInvoice(user, plan)
+		if err != nil {
+			app.ErrorChan <- err
+		}
+
+		msg := Message{
+			To:       user.Email,
+			Subject:  "Your invoice",
+			Data:     invoice,
+			Template: "invoice",
+		}
+
+		app.sendEmail(msg)
+	}()
 
 	// generate a manual (concurrent task)
 
@@ -208,4 +225,9 @@ func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 
 	// redirect
 
+}
+
+// getInvoice function generates some kind of content and send it to the user
+func (app *Config) getInvoice(u data.User, plan *data.Plan) (string, error) {
+	return plan.PlanAmountFormatted, nil
 }
