@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/gob"
 	"go-concurrency/data"
 	"log"
@@ -70,4 +71,13 @@ func TestMain(m *testing.M) {
 	}()
 
 	os.Exit(m.Run()) // setups yapıldıktan sonra test fonksiyonlarını çalıştırır.
+}
+
+// getCtx, yazdığımız test fonksiyonlarında request kullandığımızda session bilgisini getirecek.
+func getCtx(req *http.Request) context.Context {
+	ctx, err := testApp.Session.Load(req.Context(), req.Header.Get("X-Session"))
+	if err != nil {
+		log.Println(err)
+	}
+	return ctx
 }
