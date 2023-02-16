@@ -1,0 +1,73 @@
+package main
+
+import (
+	"encoding/gob"
+	"go-concurrency/data"
+	"log"
+	"net/http"
+	"os"
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/alexedwards/scs/v2"
+)
+
+var testApp Config
+
+// TestMain fonksiyonu, testleri çalıştırmaya başladığımızda ilk çalıştırılacak fonksiyondur.
+func TestMain(m *testing.M) {
+	// setup session
+	gob.Register(data.User{})
+	session := scs.New() // test için yeni bir session oluşturuldu (main.go'daki ile aynı değil)
+	session.Lifetime = 24 * time.Hour
+	session.Cookie.Persist = true
+	session.Cookie.SameSite = http.SameSiteLaxMode
+	session.Cookie.Secure = true
+
+	// setup config
+	testApp = Config{
+		Session:       session,
+		DB:            nil,
+		InfoLog:       log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime),
+		ErrorLog:      log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile),
+		Wait:          &sync.WaitGroup{},
+		ErrorChan:     make(chan error),
+		ErrorChanDone: make(chan bool),
+	}
+
+	// create a dummy mailer
+	errorChan := make(chan error)
+	mailerChan := make(chan Message, 100)
+	doneChan := make(chan bool)
+
+	testApp.Mailer = Mail{
+		Wait:       testApp.Wait,
+		ErrorChan:  errorChan,
+		MailerChan: mailerChan,
+		DoneChan:   doneChan,
+	}
+
+	// fire up goroutines
+	go func() {
+		select {
+		case <-testApp.Mailer.MailerChan:
+		case <-testApp.Mailer.ErrorChan:
+		case <-testApp.Mailer.DoneChan:
+			return
+		}
+	}()
+
+	go func() {
+		for {
+			select {
+			case err := <-testApp.ErrorChan:
+				testApp.ErrorLog.Println(err)
+			case <-testApp.ErrorChanDone:
+				return
+			}
+		}
+	}()
+
+	os.Exit(m.Run()) // setups yapıldıktan sonra test fonksiyonlarını çalıştırır.
+}
