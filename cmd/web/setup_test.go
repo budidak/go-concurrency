@@ -35,6 +35,9 @@ func TestMain(m *testing.M) {
 		Wait:          &sync.WaitGroup{},
 		ErrorChan:     make(chan error),
 		ErrorChanDone: make(chan bool),
+		Models:        data.TestNew(nil), // pointer parametre olduğu için nil geçebildik.
+		// Artık, testlerimiz için aktif database'e ihtiyaç duymayacak şekilde
+		// database fonksiyonlarını tekrar yazdık ve burada Models olarak onları geçtik.
 	}
 
 	// create a dummy mailer
