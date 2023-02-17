@@ -6,6 +6,7 @@ import (
 	"go-concurrency/data"
 	"log"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"sync"
 	"testing"
@@ -20,6 +21,10 @@ var testApp Config
 func TestMain(m *testing.M) {
 	// setup session
 	gob.Register(data.User{})
+
+	tmpPath = "./../../tmp"
+	pathToManual = "./../../pdf"
+
 	session := scs.New() // test için yeni bir session oluşturuldu (main.go'daki ile aynı değil)
 	session.Lifetime = 24 * time.Hour
 	session.Cookie.Persist = true
@@ -54,11 +59,19 @@ func TestMain(m *testing.M) {
 
 	// fire up goroutines
 	go func() {
-		select {
-		case <-testApp.Mailer.MailerChan:
-		case <-testApp.Mailer.ErrorChan:
-		case <-testApp.Mailer.DoneChan:
-			return
+		for {
+			select {
+			case <-testApp.Mailer.MailerChan:
+				testApp.Wait.Done()
+				// mail gönderildiği zaman counter -1 yapıyoruz böylece.
+				// Çünkü normal production aşamasında helpers.go içinde sendEmail() ile +1 ekliyorduk.
+				// Ama onu yine productiondayken listenForMail() içerisinde mailerChan dinleyerek
+				// ne zaman mail gönderilse sendMail() çalıştırıp onun içinde .Done ile -1 yapıyorduk.
+				// O listen işlemini burada yapıyoruz.
+			case <-testApp.Mailer.ErrorChan:
+			case <-testApp.Mailer.DoneChan:
+				return
+			}
 		}
 	}()
 
@@ -83,4 +96,29 @@ func getCtx(req *http.Request) context.Context {
 		log.Println(err)
 	}
 	return ctx
+}
+
+func TestConfig_SubscribeToPlan(t *testing.T) {
+	rr := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/subscribe?id=1", nil)
+	ctx := getCtx(req)
+	req = req.WithContext(ctx)
+
+	testApp.Session.Put(ctx, "user", data.User{
+		ID:        1,
+		Email:     "admin@example.com",
+		FirstName: "Admin",
+		LastName:  "Admin",
+		Active:    1,
+	})
+
+	handler := http.HandlerFunc(testApp.SubscribeToPlan)
+	handler.ServeHTTP(rr, req)
+
+	testApp.Wait.Wait() // counter 0 olana kadar bekleriz, çünkü goroutine kullandık.
+
+	// testlerimizi yazalım.
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("expected status code of statusseeother, but got %d", rr.Code)
+	}
 }
