@@ -69,7 +69,7 @@ func (u *UserTest) GetOne(id int) (*User, error) {
 	return u.GetByEmail("")
 }
 
-func (u *UserTest) Update() error {
+func (u *UserTest) Update(user *User) error {
 	return nil
 }
 
@@ -89,7 +89,7 @@ func (u *UserTest) ResetPassword(password string) error {
 	return nil
 }
 
-func (u *UserTest) PasswordMatches(plainText string) (bool, error) {
+func (u *UserTest) PasswordMatches(user *User, plainText string) (bool, error) {
 	return true, nil
 }
 

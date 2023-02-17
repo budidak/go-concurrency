@@ -4,6 +4,7 @@ import (
 	"go-concurrency/data"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 )
@@ -85,3 +86,53 @@ func Test_Pages(t *testing.T) {
 		}
 	}
 }
+
+func TestConfig_PostLoginPage(t *testing.T) {
+	pathToTemplates = "./templates"
+
+	// bu veriyi sayfaya post edeceğiz.
+	postedData := url.Values{
+		"email":    {"admin@example.com"},
+		"password": {"abc123abc123abc123"},
+	}
+
+	rr := httptest.NewRecorder()                                                        // response
+	req, _ := http.NewRequest("POST", "/login", strings.NewReader(postedData.Encode())) // request
+	ctx := getCtx(req)
+	req = req.WithContext(ctx) // request that can accept session data
+
+	handler := http.HandlerFunc(testApp.PostLoginPage)
+	handler.ServeHTTP(rr, req)
+
+	// testlerimizi yazıyoruz.
+	// 1 -> eğer beklenilden farklı bir http kodu alırsak hata vardır:
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("%s failed: expected %d but got %d", "PostLoginPage", http.StatusSeeOther, rr.Code)
+	}
+
+	// 2 -> eğer sessionda userID yoksa hata vardır:
+	if !testApp.Session.Exists(ctx, "userID") {
+		t.Error("did not find userID in the session")
+	}
+}
+
+/*
+	cmd/web$ go test -coverprofile=coverage.out    ---> bu bir output oluşturur.
+	cmd/web$ go tool cover -html=coverage.out      ---> çıktı dosyasını tarayıcıda açar.
+
+	Eğer coverage sonucunda error oluşmazsa aşağıdaki gibi if bloklarının içi kırmızıdır (not covered)
+	Ama eğer hata olursa aşağıdaki bloğun içi de çalıştırılmış olur, dolayısıyla yeşil görürüz (covered)
+
+    validPassword, err := user.PasswordMatches(password)
+        if err != nil {
+                app.Session.Put(r.Context(), "error", "Invalid credentials...")
+                http.Redirect(w, r, "/login", http.StatusSeeOther)
+                return
+        }
+
+	Bu testi çalıştırdığımızda FAIL gördük, kodu inceledik ve yukarıdaki bloğun içi yeşildi.
+	Dolayısıyla user.PasswordMatches() fonksiyonunda bir hata var.
+	Database'e bağlanıp şifreyi kontrol etmeye çalışıyordu.
+	user yerine app.Models.User yazacağız (interface)
+	ve fonksiyonlarımızdaki gerekli yerleri de ona göre düzenleyeceğiz.
+*/
