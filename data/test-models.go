@@ -2,6 +2,7 @@ package data
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 )
 
@@ -87,4 +88,46 @@ func (u *UserTest) ResetPassword(password string) error {
 
 func (u *UserTest) PasswordMatches(plainText string) (bool, error) {
 	return true, nil
+}
+
+type PlanTest struct {
+	ID                  int
+	PlanName            string
+	PlanAmount          int
+	PlanAmountFormatted string
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+}
+
+func (p *PlanTest) GetAll() ([]*Plan, error) {
+	var plans []*Plan
+	plan := Plan{
+		ID:         1,
+		PlanName:   "Bronze Plan",
+		PlanAmount: 1000,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+	}
+	plans = append(plans, &plan)
+	return plans, nil
+}
+
+func (p *PlanTest) GetOne(id int) (*Plan, error) {
+	plan := Plan{
+		ID:         1,
+		PlanName:   "Bronze Plan",
+		PlanAmount: 1000,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+	}
+	return &plan, nil
+}
+
+func (p *PlanTest) SubscribeUserToPlan(user User, plan Plan) error {
+	return nil
+}
+
+func (p *PlanTest) AmountForDisplay() string {
+	amount := float64(p.PlanAmount) / 100.0
+	return fmt.Sprintf("$%.2f", amount)
 }
